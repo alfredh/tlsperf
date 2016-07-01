@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <openssl/crypto.h>
 #include <re.h>
 #include "tlsperf.h"
 
@@ -182,6 +183,20 @@ int main(int argc, char *argv[])
 	re_printf("tlsperf -- TLS performance testing program\n");
 	re_printf("build:         %H\n", sys_build_get, 0);
 	re_printf("compiler:      %s\n", __VERSION__);
+	re_printf("libre:         %s\n", sys_libre_version_get());
+	re_printf("os:            %s\n", sys_os_get());
+	re_printf("arch:          %s\n", sys_arch_get());
+
+#ifdef USE_OPENSSL
+	if (tlsperf.verbose) {
+		re_printf("openssl aesni: %s\n",
+			  (OPENSSL_ia32cap & (1ULL<<57))
+			  ? "supported" : "not supported");
+		re_printf("openssl info:  %s\n%s\n",
+			  SSLeay_version(SSLEAY_VERSION),
+			  SSLeay_version(SSLEAY_CFLAGS));
+	}
+#endif
 
 	err = tls_alloc(&tlsperf.tls, TLS_METHOD_SSLV23, cert, 0);
 	if (err)
