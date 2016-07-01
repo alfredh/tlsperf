@@ -56,7 +56,7 @@ static void print_report(void)
 
 static void tls_endpoint_estab_handler(const char *cipher, void *arg)
 {
-	re_fprintf(stderr, "\r[ %u .. %c ]\r",
+	re_fprintf(stderr, "\r[ %u .. %c ]",
 		   tlsperf.count,
 		   0x20 + tlsperf.count % 0x60);
 
@@ -67,6 +67,7 @@ static void tls_endpoint_estab_handler(const char *cipher, void *arg)
 
 			tlsperf.ts_estab = tmr_jiffies();
 
+			re_printf("\nDONE!\n");
 			re_printf("cipher:        %s\n", cipher);
 			print_report();
 
