@@ -1,12 +1,11 @@
+/**
+ * @file util.c TLS Performance test -- utility functions
+ *
+ * Copyright (C) 2010 - 2016 Creytiv.com
+ */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_IO_H
-#include <io.h>
 #endif
 #include <sys/time.h>
 #include <time.h>
