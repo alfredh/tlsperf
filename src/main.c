@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <math.h>
 #include <re.h>
 #include "tlsperf.h"
 
@@ -30,7 +29,7 @@ static struct {
 	uint64_t ts_start;
 	uint64_t ts_estab;
 
-
+	bool verbose;
 } tlsperf;
 
 
@@ -57,18 +56,18 @@ static void print_report(void)
 
 static void tls_endpoint_estab_handler(const char *cipher, void *arg)
 {
-	re_fprintf(stderr, "\r%c", 0x20 + tlsperf.count % 0x60);
+	re_fprintf(stderr, "\r[ %u .. %c ]\r",
+		   tlsperf.count,
+		   0x20 + tlsperf.count % 0x60);
 
 	if (tls_endpoint_established(tlsperf.ep_cli) &&
 	    tls_endpoint_established(tlsperf.ep_srv)) {
-
-		//re_printf("both estab\n");
 
 		if (tlsperf.count >= tlsperf.num) {
 
 			tlsperf.ts_estab = tmr_jiffies();
 
-			re_printf("\ncipher:        %s\n", cipher);
+			re_printf("cipher:        %s\n", cipher);
 			print_report();
 
 			re_cancel();
@@ -93,19 +92,17 @@ static int start_test(void)
 {
 	int err;
 
-	//	re_printf("start test..\n");
-
 	tlsperf.count++;
 
 	err = tls_endpoint_alloc(&tlsperf.ep_cli, tlsperf.tls,
-				 true,
+				 tlsperf.verbose, true,
 				 tls_endpoint_estab_handler,
 				 tls_endpoint_error_handler, NULL);
 	if (err)
 		return err;
 
 	err = tls_endpoint_alloc(&tlsperf.ep_srv, tlsperf.tls,
-				 false,
+				 tlsperf.verbose, false,
 				 tls_endpoint_estab_handler,
 				 tls_endpoint_error_handler, NULL);
 	if (err)
@@ -132,7 +129,9 @@ static void usage(void)
 	(void)re_fprintf(stderr,
 			 "tlsperf -h\n"
 			 "\n"
+			 "\t-c <PEM>    Use this certificate file\n"
 			 "\t-n <NUM>    Number of TLS connections\n"
+			 "\n"
 			 "\t-h          Show summary of options\n"
 			 "\t-v          Verbose output\n"
 			 );
@@ -141,25 +140,29 @@ static void usage(void)
 
 int main(int argc, char *argv[])
 {
-	bool verbose = false;
+	const char *cert = NULL;
 	int err = 0;
 
 	tlsperf.num = 1;
 
 	for (;;) {
 
-		const int c = getopt(argc, argv, "a:ce:p:n:s:hv");
+		const int c = getopt(argc, argv, "a:c:e:p:n:s:hv");
 		if (0 > c)
 			break;
 
 		switch (c) {
+
+		case 'c':
+			cert = optarg;
+			break;
 
 		case 'n':
 			tlsperf.num = atoi(optarg);
 			break;
 
 		case 'v':
-			verbose = true;
+			tlsperf.verbose = true;
 			break;
 
 		case '?':
@@ -179,14 +182,20 @@ int main(int argc, char *argv[])
 	re_printf("build:         %H\n", sys_build_get, 0);
 	re_printf("compiler:      %s\n", __VERSION__);
 
-	err = tls_alloc(&tlsperf.tls, TLS_METHOD_SSLV23, 0, 0);
+	err = tls_alloc(&tlsperf.tls, TLS_METHOD_SSLV23, cert, 0);
 	if (err)
 		goto out;
 
-	re_printf("selfsigned:    RSA-1024\n");
-	err = tls_set_selfsigned(tlsperf.tls, "a@b");
-	if (err)
-		goto out;
+	if (cert) {
+		re_printf("certificate:   %s\n", cert);
+	}
+	else {
+		re_printf("certificate:   selfsigned RSA-1024\n");
+		err = tls_set_selfsigned(tlsperf.tls, "a@b");
+		if (err)
+			goto out;
+	}
+
 	re_printf("starting tests now. (num=%u)\n", tlsperf.num);
 
 	/*
@@ -195,11 +204,9 @@ int main(int argc, char *argv[])
 
 	tlsperf.ts_start = tmr_jiffies();
 
-
 	err = start_test();
 	if (err)
 		goto out;
-
 
 	re_main(0);
 

@@ -1,3 +1,8 @@
+/**
+ * @file endpoint.c TLS Endpoint code (Client or Server)
+ *
+ * Copyright (C) 2010 - 2016 Creytiv.com
+ */
 
 #include <re.h>
 #include "tlsperf.h"
@@ -9,6 +14,7 @@ struct tls_endpoint {
 	struct tcp_conn *tc;
 	struct tls_conn *sc;
 	struct sa addr;
+	bool verbose;
 	bool client;
 	bool established;
 	tls_endpoint_estab_h *estabh;
@@ -41,11 +47,11 @@ static void tcp_estab_handler(void *arg)
 {
 	struct tls_endpoint *ep = arg;
 
-#if 0
-	re_printf("[ %s ] established, cipher is %s\n",
-		  ep->client ? "Client" : "Server",
-		  tls_cipher_name(ep->sc));
-#endif
+	if (ep->verbose) {
+		re_printf("[ %s ] established, cipher is %s\n",
+			  ep->client ? "Client" : "Server",
+			  tls_cipher_name(ep->sc));
+	}
 
 	ep->established = true;
 
@@ -83,7 +89,7 @@ static void tcp_conn_handler(const struct sa *peer, void *arg)
 
 
 int tls_endpoint_alloc(struct tls_endpoint **epp, struct tls *tls,
-		       bool client,
+		       bool verbose, bool client,
 		       tls_endpoint_estab_h *estabh,
 		       tls_endpoint_error_h *errorh, void *arg)
 {
@@ -91,8 +97,11 @@ int tls_endpoint_alloc(struct tls_endpoint **epp, struct tls *tls,
 	int err = 0;
 
 	ep = mem_zalloc(sizeof(*ep), destructor);
+	if (!ep)
+		return ENOMEM;
 
 	ep->tls = mem_ref(tls);
+	ep->verbose = verbose;
 	ep->client = client;
 	ep->estabh = estabh;
 	ep->errorh = errorh;
