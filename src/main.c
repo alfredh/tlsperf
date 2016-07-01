@@ -31,6 +31,8 @@ static struct {
 	uint64_t ts_estab;
 
 	bool verbose;
+	int proto;
+	int err;
 } tlsperf;
 
 
@@ -55,8 +57,17 @@ static void print_report(void)
 }
 
 
+static void abort_test(int err)
+{
+	tlsperf.err = err;
+	re_cancel();
+}
+
+
 static void tls_endpoint_estab_handler(const char *cipher, void *arg)
 {
+	int err;
+
 	re_fprintf(stderr, "\r[ %u .. %c ]",
 		   tlsperf.count,
 		   0x20 + tlsperf.count % 0x60);
@@ -76,7 +87,9 @@ static void tls_endpoint_estab_handler(const char *cipher, void *arg)
 		}
 		else {
 			stop_test();
-			start_test();
+			err = start_test();
+			if (err)
+				abort_test(err);
 		}
 	}
 }
@@ -86,7 +99,7 @@ static void tls_endpoint_error_handler(int err, void *arg)
 {
 	re_fprintf(stderr, "TLS Endpoint error (%m) -- ABORT\n", err);
 
-	re_cancel();
+	abort_test(err);
 }
 
 
@@ -97,14 +110,14 @@ static int start_test(void)
 	tlsperf.count++;
 
 	err = tls_endpoint_alloc(&tlsperf.ep_cli, tlsperf.tls,
-				 tlsperf.verbose, true,
+				 tlsperf.verbose, true, tlsperf.proto,
 				 tls_endpoint_estab_handler,
 				 tls_endpoint_error_handler, NULL);
 	if (err)
 		return err;
 
 	err = tls_endpoint_alloc(&tlsperf.ep_srv, tlsperf.tls,
-				 tlsperf.verbose, false,
+				 tlsperf.verbose, false, tlsperf.proto,
 				 tls_endpoint_estab_handler,
 				 tls_endpoint_error_handler, NULL);
 	if (err)
@@ -146,10 +159,11 @@ int main(int argc, char *argv[])
 	int err = 0;
 
 	tlsperf.num = 1;
+	tlsperf.proto = IPPROTO_TCP;
 
 	for (;;) {
 
-		const int c = getopt(argc, argv, "a:c:e:p:n:s:hv");
+		const int c = getopt(argc, argv, "a:dc:e:p:n:s:hv");
 		if (0 > c)
 			break;
 
@@ -157,6 +171,10 @@ int main(int argc, char *argv[])
 
 		case 'c':
 			cert = optarg;
+			break;
+
+		case 'd':
+			tlsperf.proto = IPPROTO_UDP;
 			break;
 
 		case 'n':
@@ -198,6 +216,9 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+	re_printf("protocol:      %s\n",
+		  tlsperf.proto == IPPROTO_TCP ? "TLS" : "DTLS");
+
 	err = tls_alloc(&tlsperf.tls, TLS_METHOD_SSLV23, cert, 0);
 	if (err)
 		goto out;
@@ -238,5 +259,5 @@ int main(int argc, char *argv[])
 	mem_debug();
 	tmr_debug();
 
-	return err;
+	return err ? err : tlsperf.err;
 }

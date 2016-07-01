@@ -13,7 +13,7 @@ typedef void (tls_endpoint_error_h)(int err, void *arg);
 
 
 int tls_endpoint_alloc(struct tls_endpoint **epp, struct tls *tls,
-		       bool verbose, bool client,
+		       bool verbose, bool client, int proto,
 		       tls_endpoint_estab_h *estabh,
 		       tls_endpoint_error_h *errorh, void *arg);
 int tls_endpoint_start(struct tls_endpoint *ep, const struct sa *addr);
