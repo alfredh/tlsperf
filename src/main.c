@@ -67,6 +67,7 @@ static void abort_test(int err)
 static void tls_endpoint_estab_handler(const char *cipher, void *arg)
 {
 	int err;
+	(void)arg;
 
 	re_fprintf(stderr, "\r[ %u .. %c ]",
 		   tlsperf.count,
@@ -97,6 +98,8 @@ static void tls_endpoint_estab_handler(const char *cipher, void *arg)
 
 static void tls_endpoint_error_handler(int err, void *arg)
 {
+	(void)arg;
+
 	re_fprintf(stderr, "TLS Endpoint error (%m) -- ABORT\n", err);
 
 	abort_test(err);
@@ -206,14 +209,9 @@ int main(int argc, char *argv[])
 	re_printf("arch:          %s\n", sys_arch_get());
 
 #ifdef USE_OPENSSL
-	if (tlsperf.verbose) {
-		re_printf("openssl aesni: %s\n",
-			  (OPENSSL_ia32cap & (1ULL<<57))
-			  ? "supported" : "not supported");
-		re_printf("openssl info:  %s\n%s\n",
-			  SSLeay_version(SSLEAY_VERSION),
-			  SSLeay_version(SSLEAY_CFLAGS));
-	}
+	re_printf("openssl info:  %s\n%s\n",
+		  SSLeay_version(SSLEAY_VERSION),
+		  SSLeay_version(SSLEAY_CFLAGS));
 #endif
 
 	re_printf("protocol:      %s\n",

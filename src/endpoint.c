@@ -74,6 +74,7 @@ static void tcp_conn_handler(const struct sa *peer, void *arg)
 {
 	struct tls_endpoint *ep = arg;
 	int err;
+	(void)peer;
 
 	err = tcp_accept(&ep->tc, ep->ts, tcp_estab_handler,
 			 0, tcp_close_handler, ep);
@@ -119,6 +120,7 @@ static void dtls_conn_handler(const struct sa *peer, void *arg)
 {
 	struct tls_endpoint *ep = arg;
 	int err;
+	(void)peer;
 
 	if (ep->client || ep->sc) {
 		conn_close(ep, EPROTO);
