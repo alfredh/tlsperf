@@ -148,6 +148,7 @@ static void usage(void)
 			 "tlsperf -h\n"
 			 "\n"
 			 "\t-c <PEM>    Use this certificate file\n"
+			 "\t-d          Use DTLS protocol\n"
 			 "\t-n <NUM>    Number of TLS connections\n"
 			 "\n"
 			 "\t-h          Show summary of options\n"
