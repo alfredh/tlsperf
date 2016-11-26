@@ -62,7 +62,3 @@ clean:
 install: $(BIN)
 	@mkdir -p $(DESTDIR)$(BINDIR)
 	$(INSTALL) -m 0755 $(BIN) $(DESTDIR)$(BINDIR)
-
-git_snapshot:
-	git archive --format=tar --prefix=$(PROJECT)-$(VERSION)/ HEAD \
-		| gzip > ../$(PROJECT)-$(VERSION).tar.gz
