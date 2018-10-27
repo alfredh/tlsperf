@@ -228,8 +228,10 @@ int main(int argc, char *argv[])
 	else {
 		re_printf("certificate:   selfsigned RSA-1024\n");
 		err = tls_set_selfsigned(tlsperf.tls, "a@b");
-		if (err)
+		if (err) {
+			re_printf("failed to set self-signed certificate (%m)\n", err);
 			goto out;
+		}
 	}
 
 	re_printf("starting tests now. (num=%u)\n", tlsperf.num);
@@ -247,6 +249,10 @@ int main(int argc, char *argv[])
 	re_main(0);
 
  out:
+	if (err) {
+		re_printf("program failed with error: %m\n", err);
+	}
+
 	mem_deref(tlsperf.ep_srv);
 	mem_deref(tlsperf.ep_cli);
 
