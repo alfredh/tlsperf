@@ -1,7 +1,7 @@
 /**
  * @file util.c TLS Performance test -- utility functions
  *
- * Copyright (C) 2010 - 2016 Creytiv.com
+ * Copyright (C) 2010 - 2016 Alfred E. Heggestad
  */
 
 #ifdef HAVE_UNISTD_H

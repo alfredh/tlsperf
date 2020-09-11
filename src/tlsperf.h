@@ -1,7 +1,7 @@
 /**
  * @file tlsperf.h Internal api
  *
- * Copyright (C) 2010 - 2016 Creytiv.com
+ * Copyright (C) 2010 - 2016 Alfred E. Heggestad
  */
 
 
